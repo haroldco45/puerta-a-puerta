@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puerta a Puerta — Tablero de campaña</title>
+<meta name="description" content="Tablero de campaña para alcaldía: censo por puesto de votación, líderes, votos comprometidos, firmas y recorridos. Funciona sin internet.">
+<meta name="theme-color" content="#16233A">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Puerta a Puerta — Tablero de campaña">
+<meta property="og:description" content="Sepa cuántos votos tiene de verdad, puesto por puesto. Censo electoral, líderes, compromisos, firmas y recorridos en una sola app.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibraspositivashm.com/puerta-a-puerta/">
+<meta property="og:image" content="https://vibraspositivashm.com/og/puerta-a-puerta-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Vibras Positivas HM">
+<meta property="og:locale" content="es_CO">
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Puerta a Puerta — Tablero de campaña">
+<meta name="twitter:description" content="Sepa cuántos votos tiene de verdad, puesto por puesto.">
+<meta name="twitter:image" content="https://vibraspositivashm.com/og/puerta-a-puerta-og.png">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --papel:#EFEFE9; --tinta:#16233A; --tinta-2:#2C3B55; --oro:#C8951B;
+  --rio:#1E6E6A; --tierra:#A3341E; --gris:#6B6F76; --linea:#D6D6CD; --blanco:#FBFBF8;
+  --r:4px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--papel);color:var(--tinta)}
+body{font-family:'Barlow',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.45;padding-bottom:76px}
+h1,h2,h3,.cifra,.tab b{font-family:'Barlow Condensed','Barlow Narrow',system-ui,sans-serif;font-weight:600;letter-spacing:.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rio);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+header{background:var(--tinta);color:var(--blanco);padding:14px 16px 12px;position:sticky;top:0;z-index:20}
+header .fila{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+header h1{font-size:20px;line-height:1.1}
+header .mov{font-size:13px;color:#A9B6CC}
+.reloj{text-align:right;flex-shrink:0}
+.reloj b{font-family:'Barlow Condensed',sans-serif;font-size:26px;display:block;line-height:1;color:var(--oro)}
+.reloj span{font-size:11px;color:#A9B6CC;display:block}
+.rol{margin-top:10px;display:flex;gap:8px;align-items:center;font-size:12px;color:#A9B6CC}
+.rol button{background:none;border:1px solid #3A4A66;color:#A9B6CC;border-radius:var(--r);padding:3px 9px;font-size:12px;cursor:pointer}
+.rol button.on{border-color:var(--oro);color:var(--oro)}
+
+main{padding:16px 16px 24px;max-width:720px;margin:0 auto}
+.vista{display:none}.vista.activa{display:block}
+
+/* Tallly grid — el elemento central */
+.tally{background:var(--blanco);border:1px solid var(--linea);padding:16px}
+.tally .cifra{font-size:56px;line-height:.9;letter-spacing:-.01em}
+.tally .de{font-size:20px;color:var(--gris);font-family:'Barlow Condensed',sans-serif}
+.tally .rot{font-size:14px;color:var(--gris);margin-top:2px}
+.malla{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;margin-top:14px}
+.malla i{aspect-ratio:1;background:#E2E2D9;display:block}
+.malla i.f{background:var(--oro)}
+.malla i.p{background:var(--rio)}
+.leyenda{display:flex;gap:14px;font-size:12px;color:var(--gris);margin-top:8px;flex-wrap:wrap}
+.leyenda s{width:10px;height:10px;display:inline-block;margin-right:5px;vertical-align:-1px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.kpi{background:var(--blanco);border:1px solid var(--linea);padding:11px 12px}
+.kpi b{font-family:'Barlow Condensed',sans-serif;font-size:28px;display:block;line-height:1}
+.kpi span{font-size:12px;color:var(--gris);display:block;margin-top:2px}
+.kpi.alerta b{color:var(--tierra)}
+
+h2{font-size:19px;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--tinta);display:flex;justify-content:space-between;align-items:baseline}
+h2 em{font-style:normal;font-size:13px;font-family:'Barlow',sans-serif;color:var(--gris);font-weight:400}
+
+.item{background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--tinta-2);padding:11px 12px;margin-bottom:8px}
+.item.rural{border-left-color:var(--rio)}
+.item.rojo{border-left-color:var(--tierra)}
+.item .t{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.item .t b{font-size:16px;font-weight:600}
+.item .m{font-size:13px;color:var(--gris);margin-top:2px}
+.item .acc{display:flex;gap:14px;margin-top:8px}
+.item .acc button{background:none;border:none;color:var(--rio);font-size:13px;padding:0;cursor:pointer;border-bottom:1px solid currentColor}
+.item .acc button.del{color:var(--tierra)}
+.barra{height:5px;background:#E2E2D9;margin-top:8px}
+.barra i{display:block;height:100%;background:var(--oro)}
+.chip{font-size:11px;border:1px solid var(--linea);padding:1px 6px;color:var(--gris);white-space:nowrap}
+.chip.ok{border-color:var(--rio);color:var(--rio)}
+.chip.tibio{border-color:var(--oro);color:#8C6710}
+
+.vacio{background:var(--blanco);border:1px dashed var(--linea);padding:22px 16px;text-align:center;color:var(--gris);font-size:14px}
+.vacio b{display:block;color:var(--tinta);font-family:'Barlow Condensed',sans-serif;font-size:19px;margin-bottom:4px}
+
+.btn{background:var(--tinta);color:var(--blanco);border:none;padding:11px 16px;font-weight:500;cursor:pointer;border-radius:var(--r)}
+.btn.sec{background:none;color:var(--tinta);border:1px solid var(--tinta)}
+.btn.full{width:100%;margin-top:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.fila-btn{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+.buscar{width:100%;padding:10px 12px;border:1px solid var(--linea);background:var(--blanco);margin-bottom:10px}
+.filtros{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px}
+.filtros button{white-space:nowrap;background:var(--blanco);border:1px solid var(--linea);padding:5px 11px;font-size:13px;cursor:pointer;color:var(--gris)}
+.filtros button.on{background:var(--tinta);color:var(--blanco);border-color:var(--tinta)}
+
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--tinta);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:none;color:#8697B3;padding:9px 2px 11px;cursor:pointer;border-top:3px solid transparent}
+nav button b{display:block;font-size:13px;font-weight:600}
+nav button small{font-size:10px;display:block;color:#5E6F8C}
+nav button.on{color:var(--blanco);border-top-color:var(--oro)}
+nav button.on small{color:var(--oro)}
+
+.modal{position:fixed;inset:0;background:rgba(22,35,58,.55);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.hoja{background:var(--papel);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}
+.hoja h3{font-size:20px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--gris);margin:11px 0 3px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--linea);background:var(--blanco);border-radius:var(--r)}
+textarea{min-height:64px;resize:vertical}
+.aviso{font-size:12px;color:var(--gris);background:#E7E7E0;border-left:3px solid var(--oro);padding:9px 10px;margin-top:14px;line-height:1.4}
+
+footer{text-align:center;font-size:12px;color:var(--gris);padding:18px 16px 8px;border-top:1px solid var(--linea);margin-top:26px}
+footer b{color:var(--tinta);font-weight:600}
+.toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:var(--tinta);color:var(--blanco);padding:10px 16px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .18s;max-width:90%;text-align:center}
+.toast.on{opacity:1}
+.instalar{background:var(--oro);color:#2A2007;padding:10px 14px;font-size:14px;display:none;align-items:center;justify-content:space-between;gap:10px}
+.instalar.on{display:flex}
+.instalar button{background:#2A2007;color:#fff;border:none;padding:6px 12px;cursor:pointer;border-radius:var(--r)}
+.tel{font-variant-numeric:tabular-nums}
+.mini{font-size:12px;color:var(--gris);margin-top:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="fila">
+    <div>
+      <h1 id="hCand">Configure la campaña</h1>
+      <div class="mov" id="hMov">Toque Ajustes para empezar</div>
+    </div>
+    <div class="reloj"><b id="hDias">—</b><span>días para las urnas</span></div>
+  </div>
+  <div class="rol">
+    <span id="rolTxt">Modo consulta · datos personales ocultos</span>
+    <button id="btnRol" type="button">Entrar como admin</button>
+  </div>
+</header>
+
+<div class="instalar" id="instalar">
+  <span>Instálela en el celular para usarla sin datos.</span>
+  <button id="btnInstalar" type="button">Instalar</button>
+</div>
+
+<main>
+
+<!-- TABLERO -->
+<section class="vista activa" id="v-tablero">
+  <div class="tally">
+    <div><span class="cifra" id="tVotos">0</span> <span class="de">de <b id="tMeta">0</b> votos</span></div>
+    <div class="rot" id="tRot">Cada casilla vale 1% de la meta</div>
+    <div class="malla" id="tMalla"></div>
+    <div class="leyenda">
+      <span><s style="background:var(--oro)"></s>Confirmado</span>
+      <span><s style="background:var(--rio)"></s>Probable</span>
+      <span><s style="background:#E2E2D9"></s>Falta</span>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="kpi"><b id="kLideres">0</b><span>Líderes activos</span></div>
+    <div class="kpi"><b id="kPuestos">0</b><span>Puestos cubiertos</span></div>
+    <div class="kpi"><b id="kFirmas">0</b><span>Firmas recogidas</span></div>
+    <div class="kpi" id="kRiesgoBox"><b id="kRiesgo">0</b><span>Líderes sin reportar (14 días)</span></div>
+  </div>
+
+  <h2>Recorridos <em id="agResumen"></em></h2>
+  <div id="listaAgenda"></div>
+  <button class="btn full" data-nuevo="agenda" type="button">Programar recorrido</button>
+
+  <h2>Respaldo de datos</h2>
+  <p class="mini">Los datos viven solo en este celular. Exporte el respaldo cada semana y guárdelo en dos lugares.</p>
+  <div class="fila-btn">
+    <button class="btn sec" id="btnExport" type="button">Exportar respaldo .json</button>
+    <button class="btn sec" id="btnImport" type="button">Importar respaldo</button>
+    <button class="btn sec" id="btnCsv" type="button">Exportar votantes .csv</button>
+    <button class="btn sec" id="btnAjustes" type="button">Ajustes de campaña</button>
+  </div>
+  <input type="file" id="fileImport" accept="application/json" hidden>
+</section>
+
+<!-- PUESTOS -->
+<section class="vista" id="v-puestos">
+  <h2>Puestos de votación <em id="pResumen"></em></h2>
+  <div id="listaPuestos"></div>
+  <button class="btn full" data-nuevo="puesto" type="button">Agregar puesto</button>
+  <div class="aviso">El potencial de cada puesto lo publica la Registraduría antes de cada elección. Cárguelo tal cual: es la única forma de saber si su meta es alcanzable o es un deseo.</div>
+</section>
+
+<!-- LÍDERES -->
+<section class="vista" id="v-lideres">
+  <h2>Líderes <em id="lResumen"></em></h2>
+  <input class="buscar" id="bLideres" placeholder="Buscar líder o barrio" type="search">
+  <div id="listaLideres"></div>
+  <button class="btn full" data-nuevo="lider" type="button">Agregar líder</button>
+</section>
+
+<!-- VOTANTES -->
+<section class="vista" id="v-votantes">
+  <h2>Compromisos <em id="vResumen"></em></h2>
+  <input class="buscar" id="bVotantes" placeholder="Buscar por nombre o barrio" type="search">
+  <div class="filtros" id="fVotantes">
+    <button class="on" data-f="todos" type="button">Todos</button>
+    <button data-f="confirmado" type="button">Confirmados</button>
+    <button data-f="probable" type="button">Probables</button>
+    <button data-f="contactar" type="button">Por contactar</button>
+  </div>
+  <div id="listaVotantes"></div>
+  <button class="btn full" data-nuevo="votante" type="button">Registrar compromiso</button>
+  <div class="aviso">Ley 1581 de 2012: registre a una persona solo si ella autorizó que la contacten. Los teléfonos se ocultan en modo consulta y nadie fuera del equipo debe ver esta lista.</div>
+</section>
+
+<!-- FIRMAS -->
+<section class="vista" id="v-firmas">
+  <h2>Firmas <em id="fResumen"></em></h2>
+  <div class="tally">
+    <div><span class="cifra" id="fCifra">0</span> <span class="de">de <b id="fMeta">0</b> requeridas</span></div>
+    <div class="rot" id="fRot"></div>
+    <div class="barra" style="height:9px"><i id="fBarra" style="width:0%"></i></div>
+    <div class="leyenda"><span id="fRecomendada"></span></div>
+  </div>
+  <h2>Entregas por recolector</h2>
+  <div id="listaFirmas"></div>
+  <button class="btn full" data-nuevo="firma" type="button">Registrar entrega</button>
+  <div class="aviso">La Registraduría anula un porcentaje alto de apoyos por cédula ilegible, repetida o de otro municipio. Recoja al menos 40% por encima de la meta y no deje la entrega para el último día.</div>
+</section>
+
+<footer>
+  Desarrollada por <b>Vibras Positivas HM</b> — Derechos de Autor Reservados
+</footer>
+</main>
+
+<nav>
+  <button class="on" data-v="tablero" type="button"><b>Tablero</b><small>hoy</small></button>
+  <button data-v="puestos" type="button"><b>Puestos</b><small>mesas</small></button>
+  <button data-v="lideres" type="button"><b>Líderes</b><small>equipo</small></button>
+  <button data-v="votantes" type="button"><b>Votos</b><small>compromisos</small></button>
+  <button data-v="firmas" type="button"><b>Firmas</b><small>inscripción</small></button>
+</nav>
+
+<div class="modal" id="modal"><div class="hoja" id="hoja"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const CLAVE='vphm_puerta_a_puerta_v1';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=n=>Number(n||0).toLocaleString('es-CO');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const hoyISO=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10); // Colombia UTC-5
+
+let admin=false, filtroVot='todos';
+
+const BASE={
+  config:{candidato:'',movimiento:'',municipio:'Caucasia, Antioquia',censo:0,metaVotos:0,cargos:1,fecha:'2027-10-31',pin:''},
+  puestos:[],lideres:[],votantes:[],firmas:[],agenda:[]
+};
+let d=JSON.parse(JSON.stringify(BASE));
+
+/* ---------- almacenamiento (localStorage; window.storage como respaldo) ---------- */
+async function guardar(){
+  const txt=JSON.stringify(d);
+  try{ localStorage.setItem(CLAVE,txt); }
+  catch(e){ try{ await window.storage.set(CLAVE,txt); }catch(_){ toast('No se pudo guardar en este dispositivo'); } }
+}
+async function cargar(){
+  let txt=null;
+  try{ txt=localStorage.getItem(CLAVE); }catch(e){}
+  if(!txt){ try{ const r=await window.storage.get(CLAVE); txt=r&&r.value; }catch(e){} }
+  if(txt){ try{ d=Object.assign(JSON.parse(JSON.stringify(BASE)),JSON.parse(txt)); }catch(e){} }
+}
+
+/* ---------- utilidades ---------- */
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400);}
+function tel(v){ if(!v) return '—'; return admin? v : '•••• ••• '+String(v).slice(-3); }
+function metaFirmas(){
+  const c=Number(d.config.censo||0), cargos=Math.max(1,Number(d.config.cargos||1));
+  if(!c) return 0;
+  return Math.min(50000, Math.ceil(c/cargos*0.20));
+}
+function diasUrnas(){
+  if(!d.config.fecha) return null;
+  const f=new Date(d.config.fecha+'T08:00:00-05:00');
+  return Math.ceil((f-new Date())/86400e3);
+}
+function votosDe(f){ return d.votantes.filter(f); }
+function conteoLider(id){
+  const v=d.votantes.filter(x=>x.lider===id);
+  return {conf:v.filter(x=>x.estado==='confirmado').length, prob:v.filter(x=>x.estado==='probable').length, tot:v.length};
+}
+function conteoPuesto(id){
+  const v=d.votantes.filter(x=>x.puesto===id);
+  return {conf:v.filter(x=>x.estado==='confirmado').length, prob:v.filter(x=>x.estado==='probable').length, tot:v.length};
+}
+function totalFirmas(){ return d.firmas.reduce((a,f)=>a+Number(f.cantidad||0),0); }
+function lideresFlojos(){
+  const lim=new Date(Date.now()-14*86400e3).toISOString().slice(0,10);
+  return d.lideres.filter(l=>{ const v=d.votantes.filter(x=>x.lider===l.id); if(!v.length) return true;
+    return v.map(x=>x.fecha||'').sort().pop() < lim; });
+}
+
+/* ---------- render ---------- */
+function render(){
+  const cfg=d.config;
+  $('#hCand').textContent=cfg.candidato||'Configure la campaña';
+  $('#hMov').textContent=cfg.movimiento? cfg.movimiento+' · '+cfg.municipio : 'Toque Ajustes para empezar';
+  const dd=diasUrnas();
+  $('#hDias').textContent = dd===null? '—' : (dd>0? num(dd) : '0');
+  renderTablero(); renderPuestos(); renderLideres(); renderVotantes(); renderFirmas(); renderAgenda();
+}
+
+function renderTablero(){
+  const conf=d.votantes.filter(x=>x.estado==='confirmado').length;
+  const prob=d.votantes.filter(x=>x.estado==='probable').length;
+  const meta=Number(d.config.metaVotos||0);
+  $('#tVotos').textContent=num(conf+prob);
+  $('#tMeta').textContent=num(meta);
+  const pc=meta? (conf/meta)*100 : 0, pp=meta? (prob/meta)*100 : 0;
+  let html='';
+  for(let i=1;i<=100;i++){
+    const cls = i<=Math.round(pc)? 'f' : (i<=Math.round(pc+pp)? 'p':'');
+    html+='<i class="'+cls+'"></i>';
+  }
+  $('#tMalla').innerHTML=html;
+  $('#tRot').textContent = meta? (num(conf)+' confirmados · '+num(prob)+' probables · faltan '+num(Math.max(0,meta-conf-prob))) : 'Defina la meta de votos en Ajustes';
+
+  $('#kLideres').textContent=num(d.lideres.length);
+  const cub=d.puestos.filter(p=>d.lideres.some(l=>l.puesto===p.id)).length;
+  $('#kPuestos').textContent=cub+'/'+d.puestos.length;
+  $('#kFirmas').textContent=num(totalFirmas());
+  const fl=lideresFlojos().length;
+  $('#kRiesgo').textContent=num(fl);
+  $('#kRiesgoBox').classList.toggle('alerta',fl>0);
+}
+
+function renderAgenda(){
+  const hoy=hoyISO();
+  const ag=[...d.agenda].sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  const prox=ag.filter(a=>a.fecha>=hoy);
+  $('#agResumen').textContent=prox.length? prox.length+' programados':'';
+  const cont=$('#listaAgenda');
+  if(!prox.length){ cont.innerHTML='<div class="vacio"><b>Sin recorridos programados</b>Un barrio por semana, siempre el mismo día, vale más que diez visitas en octubre.</div>'; return; }
+  cont.innerHTML=prox.slice(0,6).map(a=>{
+    const l=d.lideres.find(x=>x.id===a.lider);
+    return '<div class="item"><div class="t"><b>'+esc(a.barrio)+'</b><span class="chip">'+esc(a.fecha)+(a.hora?' '+esc(a.hora):'')+'</span></div>'+
+      '<div class="m">'+esc(a.tipo||'Recorrido')+(l?' · '+esc(l.nombre):'')+'</div>'+
+      accs('agenda',a.id)+'</div>';
+  }).join('');
+}
+
+function renderPuestos(){
+  const cont=$('#listaPuestos');
+  const pot=d.puestos.reduce((a,p)=>a+Number(p.potencial||0),0);
+  $('#pResumen').textContent=d.puestos.length? num(pot)+' de potencial':'';
+  if(!d.puestos.length){ cont.innerHTML='<div class="vacio"><b>Sin puestos cargados</b>Empiece por los tres puestos más grandes del casco urbano.</div>'; return; }
+  cont.innerHTML=d.puestos.map(p=>{
+    const c=conteoPuesto(p.id), meta=Number(p.meta||0);
+    const pct=meta?Math.min(100,Math.round((c.conf+c.prob)/meta*100)):0;
+    const lids=d.lideres.filter(l=>l.puesto===p.id).length;
+    return '<div class="item '+(p.zona==='rural'?'rural':'')+'"><div class="t"><b>'+esc(p.nombre)+'</b>'+
+      '<span class="chip">'+(p.zona==='rural'?'Rural':'Urbano')+'</span></div>'+
+      '<div class="m">'+num(p.mesas||0)+' mesas · potencial '+num(p.potencial||0)+' · '+lids+' líder(es)</div>'+
+      '<div class="m">'+num(c.conf)+' confirmados + '+num(c.prob)+' probables · meta '+num(meta)+'</div>'+
+      '<div class="barra"><i style="width:'+pct+'%"></i></div>'+
+      accs('puesto',p.id)+'</div>';
+  }).join('');
+}
+
+function renderLideres(){
+  const q=($('#bLideres').value||'').toLowerCase();
+  const lista=d.lideres.filter(l=>!q||(l.nombre+' '+(l.barrio||'')).toLowerCase().includes(q));
+  const metaTot=d.lideres.reduce((a,l)=>a+Number(l.meta||0),0);
+  $('#lResumen').textContent=d.lideres.length? 'meta sumada '+num(metaTot):'';
+  const cont=$('#listaLideres');
+  if(!lista.length){ cont.innerHTML='<div class="vacio"><b>Sin líderes</b>Un líder real trae votos con nombre propio. El que no reporta en 14 días, no está.</div>'; return; }
+  const flojos=new Set(lideresFlojos().map(l=>l.id));
+  cont.innerHTML=lista.map(l=>{
+    const c=conteoLider(l.id), meta=Number(l.meta||0);
+    const pct=meta?Math.min(100,Math.round(c.tot/meta*100)):0;
+    const p=d.puestos.find(x=>x.id===l.puesto);
+    return '<div class="item '+(flojos.has(l.id)?'rojo':'')+'"><div class="t"><b>'+esc(l.nombre)+'</b>'+
+      (flojos.has(l.id)?'<span class="chip">sin reportar</span>':'<span class="chip ok">'+pct+'%</span>')+'</div>'+
+      '<div class="m">'+esc(l.barrio||'—')+(p?' · '+esc(p.nombre):'')+'</div>'+
+      '<div class="m tel">Tel '+esc(tel(l.telefono))+' · '+num(c.tot)+' de '+num(meta)+' votos</div>'+
+      '<div class="barra"><i style="width:'+pct+'%"></i></div>'+
+      accs('lider',l.id,l.telefono)+'</div>';
+  }).join('');
+}
+
+function renderVotantes(){
+  const q=($('#bVotantes').value||'').toLowerCase();
+  let lista=d.votantes.filter(v=>!q||(v.nombre+' '+(v.barrio||'')).toLowerCase().includes(q));
+  if(filtroVot!=='todos') lista=lista.filter(v=>v.estado===filtroVot);
+  $('#vResumen').textContent=num(d.votantes.length)+' registrados';
+  const cont=$('#listaVotantes');
+  if(!lista.length){ cont.innerHTML='<div class="vacio"><b>Nada por aquí</b>Cada compromiso se registra el mismo día que se consigue, o se pierde.</div>'; return; }
+  cont.innerHTML=lista.slice(0,300).map(v=>{
+    const l=d.lideres.find(x=>x.id===v.lider), p=d.puestos.find(x=>x.id===v.puesto);
+    const chip=v.estado==='confirmado'?'<span class="chip ok">confirmado</span>':v.estado==='probable'?'<span class="chip tibio">probable</span>':'<span class="chip">por contactar</span>';
+    return '<div class="item"><div class="t"><b>'+esc(v.nombre)+'</b>'+chip+'</div>'+
+      '<div class="m">'+esc(v.barrio||'—')+(p?' · '+esc(p.nombre):'')+(l?' · '+esc(l.nombre):'')+'</div>'+
+      '<div class="m tel">Tel '+esc(tel(v.telefono))+(v.fecha?' · '+esc(v.fecha):'')+'</div>'+
+      (v.notas?'<div class="m">'+esc(v.notas)+'</div>':'')+
+      accs('votante',v.id,v.telefono)+'</div>';
+  }).join('');
+}
+
+function renderFirmas(){
+  const meta=metaFirmas(), tot=totalFirmas();
+  $('#fCifra').textContent=num(tot); $('#fMeta').textContent=num(meta);
+  $('#fBarra').style.width=(meta?Math.min(100,tot/meta*100):0)+'%';
+  $('#fRot').textContent = meta? 'Calculada sobre censo de '+num(d.config.censo)+' y '+d.config.cargos+' cargo(s): 20% del cociente, tope 50.000.' : 'Cargue el censo electoral en Ajustes para calcular la meta.';
+  $('#fRecomendada').textContent = meta? 'Meta de trabajo recomendada (+40% por anulaciones): '+num(Math.ceil(meta*1.4)) : '';
+  $('#fResumen').textContent = meta? Math.round(tot/meta*100)+'% de lo exigido':'';
+  const cont=$('#listaFirmas');
+  if(!d.firmas.length){ cont.innerHTML='<div class="vacio"><b>Sin entregas registradas</b>Anote cada planilla recibida, con nombre del recolector.</div>'; return; }
+  cont.innerHTML=[...d.firmas].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(f=>
+    '<div class="item"><div class="t"><b>'+esc(f.recolector)+'</b><span class="chip">'+num(f.cantidad)+' firmas</span></div>'+
+    '<div class="m">'+esc(f.fecha||'')+(f.zona?' · '+esc(f.zona):'')+'</div>'+accs('firma',f.id)+'</div>').join('');
+}
+
+function accs(tipo,id,telefono){
+  let h='<div class="acc"><button type="button" data-edit="'+tipo+'" data-id="'+id+'">Editar</button>';
+  if(admin&&telefono) h+='<button type="button" data-wa="'+esc(telefono)+'">WhatsApp</button>';
+  h+='<button type="button" class="del" data-del="'+tipo+'" data-id="'+id+'">Borrar</button></div>';
+  return h;
+}
+
+/* ---------- formularios ---------- */
+const opPuestos=()=>d.puestos.map(p=>({v:p.id,t:p.nombre}));
+const opLideres=()=>d.lideres.map(l=>({v:l.id,t:l.nombre}));
+const FORMS={
+  puesto:{col:'puestos',tit:'Puesto de votación',campos:[
+    {k:'nombre',l:'Nombre del puesto',t:'text',req:1},
+    {k:'zona',l:'Zona',t:'select',op:[{v:'urbana',t:'Urbana'},{v:'rural',t:'Rural'}]},
+    {k:'mesas',l:'Número de mesas',t:'number'},
+    {k:'potencial',l:'Potencial de votantes (Registraduría)',t:'number'},
+    {k:'meta',l:'Meta de votos en este puesto',t:'number'}]},
+  lider:{col:'lideres',tit:'Líder',campos:[
+    {k:'nombre',l:'Nombre completo',t:'text',req:1},
+    {k:'telefono',l:'Teléfono (WhatsApp)',t:'tel'},
+    {k:'barrio',l:'Barrio o vereda',t:'text'},
+    {k:'puesto',l:'Puesto de votación asignado',t:'select',op:opPuestos},
+    {k:'meta',l:'Compromiso de votos',t:'number'},
+    {k:'notas',l:'Notas',t:'textarea'}],priv:1},
+  votante:{col:'votantes',tit:'Compromiso',campos:[
+    {k:'nombre',l:'Nombre',t:'text',req:1},
+    {k:'telefono',l:'Teléfono',t:'tel'},
+    {k:'barrio',l:'Barrio o vereda',t:'text'},
+    {k:'puesto',l:'Puesto donde vota',t:'select',op:opPuestos},
+    {k:'lider',l:'Líder que lo trae',t:'select',op:opLideres},
+    {k:'estado',l:'Estado',t:'select',op:[{v:'contactar',t:'Por contactar'},{v:'probable',t:'Probable'},{v:'confirmado',t:'Confirmado'}]},
+    {k:'fecha',l:'Fecha del contacto',t:'date',def:hoyISO},
+    {k:'notas',l:'Qué pidió o qué le preocupa',t:'textarea'}],priv:1},
+  firma:{col:'firmas',tit:'Entrega de firmas',campos:[
+    {k:'recolector',l:'Recolector',t:'text',req:1},
+    {k:'cantidad',l:'Cantidad de firmas',t:'number',req:1},
+    {k:'zona',l:'Zona donde se recogieron',t:'text'},
+    {k:'fecha',l:'Fecha de entrega',t:'date',def:hoyISO}]},
+  agenda:{col:'agenda',tit:'Recorrido',campos:[
+    {k:'barrio',l:'Barrio o vereda',t:'text',req:1},
+    {k:'fecha',l:'Fecha',t:'date',def:hoyISO,req:1},
+    {k:'hora',l:'Hora',t:'time'},
+    {k:'tipo',l:'Tipo',t:'select',op:[{v:'Recorrido puerta a puerta',t:'Puerta a puerta'},{v:'Reunión de patio',t:'Reunión de patio'},{v:'Reunión con JAC',t:'Reunión con JAC'},{v:'Recolección de firmas',t:'Recolección de firmas'}]},
+    {k:'lider',l:'Líder responsable',t:'select',op:opLideres}]}
+};
+
+function abrirForm(tipo,id){
+  const F=FORMS[tipo]; if(!F) return;
+  const reg=id? d[F.col].find(x=>x.id===id) : null;
+  let h='<h3>'+(reg?'Editar ':'')+F.tit+'</h3><form id="frm">';
+  F.campos.forEach(c=>{
+    const val=reg? (reg[c.k]??'') : (c.def? c.def():'');
+    h+='<label for="c_'+c.k+'">'+c.l+(c.req?' *':'')+'</label>';
+    if(c.t==='select'){
+      const ops=typeof c.op==='function'? c.op():c.op;
+      h+='<select id="c_'+c.k+'" name="'+c.k+'"><option value="">— sin asignar —</option>'+
+        ops.map(o=>'<option value="'+esc(o.v)+'"'+(o.v===val?' selected':'')+'>'+esc(o.t)+'</option>').join('')+'</select>';
+    } else if(c.t==='textarea'){
+      h+='<textarea id="c_'+c.k+'" name="'+c.k+'">'+esc(val)+'</textarea>';
+    } else {
+      h+='<input id="c_'+c.k+'" name="'+c.k+'" type="'+c.t+'" value="'+esc(val)+'"'+(c.req?' required':'')+'>';
+    }
+  });
+  if(F.priv) h+='<div class="aviso">Registre datos personales solo con autorización de la persona (Ley 1581 de 2012). No comparta esta lista fuera del equipo.</div>';
+  h+='<div class="fila-btn"><button class="btn" type="submit">Guardar</button><button class="btn sec" type="button" id="cerrar">Cancelar</button></div></form>';
+  $('#hoja').innerHTML=h; $('#modal').classList.add('on');
+  $('#cerrar').onclick=cerrar;
+  $('#frm').onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target), obj=reg||{id:uid()};
+    F.campos.forEach(c=>{ obj[c.k]=fd.get(c.k)||''; });
+    if(!reg) d[F.col].push(obj);
+    await guardar(); cerrar(); render(); toast('Guardado');
+  };
+}
+
+function abrirAjustes(){
+  const c=d.config;
+  $('#hoja').innerHTML='<h3>Ajustes de campaña</h3><form id="frm">'+
+    '<label for="a1">Nombre del candidato</label><input id="a1" name="candidato" value="'+esc(c.candidato)+'">'+
+    '<label for="a2">Partido o movimiento</label><input id="a2" name="movimiento" value="'+esc(c.movimiento)+'">'+
+    '<label for="a3">Municipio</label><input id="a3" name="municipio" value="'+esc(c.municipio)+'">'+
+    '<label for="a4">Censo electoral del municipio</label><input id="a4" name="censo" type="number" value="'+esc(c.censo)+'">'+
+    '<label for="a5">Cargos por proveer (alcaldía = 1)</label><input id="a5" name="cargos" type="number" value="'+esc(c.cargos)+'">'+
+    '<label for="a6">Meta de votos</label><input id="a6" name="metaVotos" type="number" value="'+esc(c.metaVotos)+'">'+
+    '<label for="a7">Fecha de la elección</label><input id="a7" name="fecha" type="date" value="'+esc(c.fecha)+'">'+
+    '<label for="a8">Clave de admin (para ver teléfonos)</label><input id="a8" name="pin" type="text" inputmode="numeric" value="'+esc(c.pin)+'">'+
+    '<div class="aviso">La meta de firmas se calcula sola: 20% del censo dividido entre los cargos por proveer, con tope de 50.000 (Ley 130 de 1994, art. 9). Confirme el censo vigente con la Registraduría de Caucasia.</div>'+
+    '<div class="fila-btn"><button class="btn" type="submit">Guardar ajustes</button><button class="btn sec" type="button" id="cerrar">Cancelar</button></div></form>';
+  $('#modal').classList.add('on');
+  $('#cerrar').onclick=cerrar;
+  $('#frm').onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    ['candidato','movimiento','municipio','fecha','pin'].forEach(k=>d.config[k]=fd.get(k)||'');
+    ['censo','cargos','metaVotos'].forEach(k=>d.config[k]=Number(fd.get(k)||0));
+    if(d.config.cargos<1) d.config.cargos=1;
+    await guardar(); cerrar(); render(); toast('Ajustes guardados');
+  };
+}
+function cerrar(){ $('#modal').classList.remove('on'); $('#hoja').innerHTML=''; }
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.v){ $$('nav button').forEach(b=>b.classList.toggle('on',b===t)); $$('.vista').forEach(s=>s.classList.toggle('activa',s.id==='v-'+t.dataset.v)); window.scrollTo(0,0); }
+  if(t.dataset.nuevo) abrirForm(t.dataset.nuevo);
+  if(t.dataset.edit) abrirForm(t.dataset.edit,t.dataset.id);
+  if(t.dataset.wa) window.open('https://wa.me/57'+String(t.dataset.wa).replace(/\D/g,'').slice(-10),'_blank');
+  if(t.dataset.del){
+    const F=FORMS[t.dataset.del];
+    if(confirm('¿Borrar este registro? No se puede deshacer.')){
+      d[F.col]=d[F.col].filter(x=>x.id!==t.dataset.id);
+      await guardar(); render(); toast('Borrado');
+    }
+  }
+});
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') cerrar(); });
+$('#btnAjustes').onclick=abrirAjustes;
+$('#bLideres').oninput=renderLideres;
+$('#bVotantes').oninput=renderVotantes;
+$('#fVotantes').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  filtroVot=b.dataset.f; $$('#fVotantes button').forEach(x=>x.classList.toggle('on',x===b)); renderVotantes();
+});
+$('#btnRol').onclick=()=>{
+  if(admin){ admin=false; }
+  else{
+    const pin=d.config.pin;
+    if(pin && prompt('Clave de admin:')!==pin){ toast('Clave incorrecta'); return; }
+    admin=true;
+  }
+  $('#btnRol').classList.toggle('on',admin);
+  $('#btnRol').textContent=admin?'Salir de admin':'Entrar como admin';
+  $('#rolTxt').textContent=admin?'Modo admin · datos personales visibles':'Modo consulta · datos personales ocultos';
+  render();
+};
+
+/* respaldos */
+function bajar(nombre,contenido,tipo){
+  const b=new Blob([contenido],{type:tipo}), u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u; a.download=nombre; a.click(); setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+$('#btnExport').onclick=()=>{ bajar('campana-'+hoyISO()+'.json',JSON.stringify(d,null,2),'application/json'); toast('Respaldo descargado'); };
+$('#btnImport').onclick=()=>$('#fileImport').click();
+$('#fileImport').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=async()=>{ try{ const j=JSON.parse(r.result);
+      if(!j.config) throw 0;
+      if(!confirm('Esto reemplaza los datos actuales de este celular. ¿Continuar?')) return;
+      d=Object.assign(JSON.parse(JSON.stringify(BASE)),j); await guardar(); render(); toast('Respaldo cargado');
+    }catch(_){ toast('Ese archivo no es un respaldo válido'); } };
+  r.readAsText(f); e.target.value='';
+};
+$('#btnCsv').onclick=()=>{
+  if(!d.votantes.length){ toast('No hay compromisos que exportar'); return; }
+  const cab=['Nombre','Telefono','Barrio','Puesto','Lider','Estado','Fecha','Notas'];
+  const filas=d.votantes.map(v=>{
+    const l=d.lideres.find(x=>x.id===v.lider), p=d.puestos.find(x=>x.id===v.puesto);
+    return [v.nombre,tel(v.telefono),v.barrio,p?p.nombre:'',l?l.nombre:'',v.estado,v.fecha,v.notas]
+      .map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(',');
+  });
+  bajar('compromisos-'+hoyISO()+'.csv','\uFEFF'+cab.join(',')+'\n'+filas.join('\n'),'text/csv;charset=utf-8');
+  toast(admin?'CSV con teléfonos completos':'CSV con teléfonos ocultos');
+};
+
+/* PWA */
+let promptInstalar=null;
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); promptInstalar=e; $('#instalar').classList.add('on'); });
+$('#btnInstalar').onclick=async()=>{ if(!promptInstalar) return; promptInstalar.prompt(); await promptInstalar.userChoice; promptInstalar=null; $('#instalar').classList.remove('on'); };
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+(async()=>{ await cargar(); render(); setInterval(()=>{ const dd=diasUrnas(); $('#hDias').textContent=dd===null?'—':num(Math.max(0,dd)); },60000); })();
+</script>
+</body>
+</html>
