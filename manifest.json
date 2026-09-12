@@ -1,0 +1,19 @@
+{
+  "name": "Puerta a Puerta — Tablero de campaña",
+  "short_name": "Puerta a Puerta",
+  "description": "Censo por puesto de votación, líderes, compromisos, firmas y recorridos. Funciona sin internet.",
+  "lang": "es-CO",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EFEFE9",
+  "theme_color": "#16233A",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
