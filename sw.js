@@ -1,4 +1,4 @@
-const CACHE = 'puerta-a-puerta-v1';
+const CACHE = 'puerta-a-puerta-v2';
 const ARCHIVOS = [
   './',
   './index.html',
