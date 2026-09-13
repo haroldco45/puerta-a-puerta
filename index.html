@@ -114,8 +114,8 @@ h2 em{font-style:normal;font-size:13px;font-family:'Barlow',sans-serif;color:var
 
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--tinta);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:none;color:#8697B3;padding:9px 2px 11px;cursor:pointer;border-top:3px solid transparent}
-nav button b{display:block;font-size:13px;font-weight:600}
-nav button small{font-size:10px;display:block;color:#5E6F8C}
+nav button b{display:block;font-size:12px;font-weight:600}
+nav button small{font-size:9px;display:block;color:#5E6F8C}
 nav button.on{color:var(--blanco);border-top-color:var(--oro)}
 nav button.on small{color:var(--oro)}
 
@@ -137,6 +137,15 @@ footer b{color:var(--tinta);font-weight:600}
 .instalar button{background:#2A2007;color:#fff;border:none;padding:6px 12px;cursor:pointer;border-radius:var(--r)}
 .tel{font-variant-numeric:tabular-nums}
 .mini{font-size:12px;color:var(--gris);margin-top:6px}
+.fila-tema{display:block;width:100%;text-align:left;background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--tinta-2);padding:9px 11px;margin-bottom:6px;cursor:pointer}
+.fila-tema.on{border-left-color:var(--oro)}
+.fila-tema .t{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.fila-tema .t b{font-size:15px;font-weight:600}
+.nota-item{background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--rio);
+  padding:10px 11px;margin-bottom:8px}
+.nota-item p{font-size:14px;margin-bottom:4px}
+.nota-item .m{font-size:12px;color:var(--gris)}
 </style>
 </head>
 <body>
@@ -243,6 +252,19 @@ footer b{color:var(--tinta);font-weight:600}
   <div class="aviso">La Registraduría anula un porcentaje alto de apoyos por cédula ilegible, repetida o de otro municipio. Recoja al menos 40% por encima de la meta y no deje la entrega para el último día.</div>
 </section>
 
+
+<!-- ESCUCHA -->
+<section class="vista" id="v-escucha">
+  <h2>Qué pide la gente <em id="eResumen"></em></h2>
+  <label for="eBarrio" style="display:block;font-size:13px;color:var(--gris);margin-bottom:4px">Filtrar por barrio o vereda</label>
+  <select id="eBarrio" class="buscar"></select>
+  <div id="listaTemas"></div>
+
+  <h2>En sus propias palabras <em id="nResumen"></em></h2>
+  <div id="listaNotas"></div>
+  <div class="aviso">Esto es el programa de gobierno escrito con las palabras de la gente, no con las de un asesor. Registre el tema en cada compromiso: a los mil registros, las prioridades salen solas de los datos.</div>
+</section>
+
 <footer>
   Desarrollada por <b>Vibras Positivas HM</b> — Derechos de Autor Reservados
 </footer>
@@ -254,6 +276,7 @@ footer b{color:var(--tinta);font-weight:600}
   <button data-v="lideres" type="button"><b>Líderes</b><small>equipo</small></button>
   <button data-v="votantes" type="button"><b>Votos</b><small>compromisos</small></button>
   <button data-v="firmas" type="button"><b>Firmas</b><small>inscripción</small></button>
+  <button data-v="escucha" type="button"><b>Escucha</b><small>temas</small></button>
 </nav>
 
 <div class="modal" id="modal"><div class="hoja" id="hoja"></div></div>
@@ -268,7 +291,24 @@ const num=n=>Number(n||0).toLocaleString('es-CO');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const hoyISO=()=>new Date(Date.now()-5*3600e3).toISOString().slice(0,10); // Colombia UTC-5
 
-let admin=false, filtroVot='todos';
+let admin=false, filtroVot='todos', temaSel='', barrioSel='';
+
+const TEMAS=[
+ {v:'agua',t:'Agua y alcantarillado'},
+ {v:'vias',t:'Vías y movilidad'},
+ {v:'empleo',t:'Empleo y economía'},
+ {v:'mineria',t:'Minería y formalización'},
+ {v:'salud',t:'Salud'},
+ {v:'educacion',t:'Educación'},
+ {v:'seguridad',t:'Seguridad y convivencia'},
+ {v:'servicios',t:'Energía y alumbrado'},
+ {v:'vivienda',t:'Vivienda'},
+ {v:'ambiente',t:'Medio ambiente y río'},
+ {v:'jovenes',t:'Deporte, cultura y jóvenes'},
+ {v:'tramites',t:'Atención en la alcaldía'},
+ {v:'otro',t:'Otro'}
+];
+const temaTxt=v=>{const x=TEMAS.find(t=>t.v===v);return x?x.t:'Sin clasificar';};
 
 const BASE={
   config:{candidato:'',movimiento:'',municipio:'Caucasia, Antioquia',censo:0,metaVotos:0,cargos:1,fecha:'2027-10-31',pin:''},
@@ -325,7 +365,7 @@ function render(){
   $('#hMov').textContent=cfg.movimiento? cfg.movimiento+' · '+cfg.municipio : 'Toque Ajustes para empezar';
   const dd=diasUrnas();
   $('#hDias').textContent = dd===null? '—' : (dd>0? num(dd) : '0');
-  renderTablero(); renderPuestos(); renderLideres(); renderVotantes(); renderFirmas(); renderAgenda();
+  renderTablero(); renderPuestos(); renderLideres(); renderVotantes(); renderFirmas(); renderAgenda(); renderEscucha();
 }
 
 function renderTablero(){
@@ -438,6 +478,44 @@ function renderFirmas(){
     '<div class="m">'+esc(f.fecha||'')+(f.zona?' · '+esc(f.zona):'')+'</div>'+accs('firma',f.id)+'</div>').join('');
 }
 
+function renderEscucha(){
+  const sel=$('#eBarrio');
+  const barrios=[...new Set(d.votantes.map(v=>v.barrio).filter(Boolean))].sort();
+  if(!barrios.includes(barrioSel)) barrioSel='';
+  sel.innerHTML='<option value="">Todo el municipio</option>'+
+    barrios.map(b=>'<option value="'+esc(b)+'"'+(b===barrioSel?' selected':'')+'>'+esc(b)+'</option>').join('');
+
+  const base=d.votantes.filter(v=>!barrioSel||v.barrio===barrioSel);
+  const conTema=base.filter(v=>v.tema);
+  $('#eResumen').textContent=conTema.length+' de '+base.length+' con tema';
+
+  const cont=$('#listaTemas');
+  if(!conTema.length){
+    cont.innerHTML='<div class="vacio"><b>Todavía no hay temas</b>Al registrar un compromiso, elija el tema de lo que la persona pidió. Sin eso esta pantalla queda vacía.</div>';
+    $('#listaNotas').innerHTML=''; $('#nResumen').textContent='';
+    return;
+  }
+  const cuenta={};
+  conTema.forEach(v=>{cuenta[v.tema]=(cuenta[v.tema]||0)+1;});
+  const orden=Object.entries(cuenta).sort((a,b)=>b[1]-a[1]);
+  const max=orden[0][1];
+  let h='<button type="button" class="fila-tema'+(temaSel===''?' on':'')+'" data-tema="">'+
+        '<div class="t"><b>Todos los temas</b><span class="chip">'+num(conTema.length)+'</span></div></button>';
+  h+=orden.map(([k,n])=>
+    '<button type="button" class="fila-tema'+(temaSel===k?' on':'')+'" data-tema="'+esc(k)+'">'+
+    '<div class="t"><b>'+esc(temaTxt(k))+'</b><span class="chip">'+num(n)+' · '+Math.round(n/conTema.length*100)+'%</span></div>'+
+    '<div class="barra"><i style="width:'+Math.round(n/max*100)+'%"></i></div></button>').join('');
+  cont.innerHTML=h;
+
+  const notas=base.filter(v=>v.notas&&(!temaSel||v.tema===temaSel))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  $('#nResumen').textContent=notas.length+' anotaciones';
+  $('#listaNotas').innerHTML = notas.length
+    ? notas.slice(0,60).map(v=>'<div class="nota-item"><p>'+esc(v.notas)+'</p>'+
+        '<div class="m">'+esc(v.barrio||'—')+' · '+esc(temaTxt(v.tema))+(v.fecha?' · '+esc(v.fecha):'')+'</div></div>').join('')
+    : '<div class="vacio"><b>Sin anotaciones aquí</b>El campo de notas es el que convierte una lista de votos en un programa de gobierno.</div>';
+}
+
 function accs(tipo,id,telefono){
   let h='<div class="acc"><button type="button" data-edit="'+tipo+'" data-id="'+id+'">Editar</button>';
   if(admin&&telefono) h+='<button type="button" data-wa="'+esc(telefono)+'">WhatsApp</button>';
@@ -470,6 +548,7 @@ const FORMS={
     {k:'lider',l:'Líder que lo trae',t:'select',op:opLideres},
     {k:'estado',l:'Estado',t:'select',op:[{v:'contactar',t:'Por contactar'},{v:'probable',t:'Probable'},{v:'confirmado',t:'Confirmado'}]},
     {k:'fecha',l:'Fecha del contacto',t:'date',def:hoyISO},
+    {k:'tema',l:'Tema principal de lo que pidió',t:'select',op:TEMAS},
     {k:'notas',l:'Qué pidió o qué le preocupa',t:'textarea'}],priv:1},
   firma:{col:'firmas',tit:'Entrega de firmas',campos:[
     {k:'recolector',l:'Recolector',t:'text',req:1},
@@ -544,6 +623,7 @@ function cerrar(){ $('#modal').classList.remove('on'); $('#hoja').innerHTML=''; 
 document.addEventListener('click',async e=>{
   const t=e.target.closest('button'); if(!t) return;
   if(t.dataset.v){ $$('nav button').forEach(b=>b.classList.toggle('on',b===t)); $$('.vista').forEach(s=>s.classList.toggle('activa',s.id==='v-'+t.dataset.v)); window.scrollTo(0,0); }
+  if(t.dataset.tema!==undefined&&t.classList.contains('fila-tema')){ temaSel=t.dataset.tema; renderEscucha(); }
   if(t.dataset.nuevo) abrirForm(t.dataset.nuevo);
   if(t.dataset.edit) abrirForm(t.dataset.edit,t.dataset.id);
   if(t.dataset.wa) window.open('https://wa.me/57'+String(t.dataset.wa).replace(/\D/g,'').slice(-10),'_blank');
@@ -557,6 +637,7 @@ document.addEventListener('click',async e=>{
 });
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') cerrar(); });
 $('#btnAjustes').onclick=abrirAjustes;
+$('#eBarrio').onchange=e=>{ barrioSel=e.target.value; temaSel=''; renderEscucha(); };
 $('#bLideres').oninput=renderLideres;
 $('#bVotantes').oninput=renderVotantes;
 $('#fVotantes').addEventListener('click',e=>{
@@ -595,10 +676,10 @@ $('#fileImport').onchange=e=>{
 };
 $('#btnCsv').onclick=()=>{
   if(!d.votantes.length){ toast('No hay compromisos que exportar'); return; }
-  const cab=['Nombre','Telefono','Barrio','Puesto','Lider','Estado','Fecha','Notas'];
+  const cab=['Nombre','Telefono','Barrio','Puesto','Lider','Estado','Tema','Fecha','Notas'];
   const filas=d.votantes.map(v=>{
     const l=d.lideres.find(x=>x.id===v.lider), p=d.puestos.find(x=>x.id===v.puesto);
-    return [v.nombre,tel(v.telefono),v.barrio,p?p.nombre:'',l?l.nombre:'',v.estado,v.fecha,v.notas]
+    return [v.nombre,tel(v.telefono),v.barrio,p?p.nombre:'',l?l.nombre:'',v.estado,temaTxt(v.tema),v.fecha,v.notas]
       .map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(',');
   });
   bajar('compromisos-'+hoyISO()+'.csv','\uFEFF'+cab.join(',')+'\n'+filas.join('\n'),'text/csv;charset=utf-8');
