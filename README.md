@@ -17,6 +17,7 @@ El problema que hunde a los candidatos independientes no es la falta de propuest
 | **Líderes** | Equipo por barrio/vereda, puesto asignado, compromiso de votos y cumplimiento. Marca en rojo a quien lleva 14 días sin reportar. |
 | **Compromisos** | Votante por votante: barrio, puesto donde vota, líder que lo trae, estado (por contactar / probable / confirmado). Búsqueda y filtros. |
 | **Firmas** | Calcula sola la meta legal y registra entregas por recolector. |
+| **Escucha** | Ranking de temas a partir de lo que pidió cada persona, filtrable por barrio, con las anotaciones textuales debajo. Es el insumo del programa de gobierno. |
 
 ## Cálculo de la meta de firmas
 
@@ -55,7 +56,7 @@ Exportar respaldo `.json` una vez por semana y guardarlo en dos lugares. Si se p
 1. Ajustes: nombre, movimiento, censo electoral, meta de votos, fecha de elección y clave de admin.
 2. Cargar los puestos de votación con el potencial real de la Registraduría.
 3. Cargar líderes y asignarles puesto y compromiso de votos.
-4. De ahí en adelante: cada compromiso se registra **el mismo día que se consigue**.
+4. De ahí en adelante: cada compromiso se registra **el mismo día que se consigue**, siempre con su tema.
 
 ## Stack
 
